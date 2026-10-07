@@ -48,9 +48,11 @@ leitura dos padrões fica a cargo de quem usa.
 
 > Substituir pelos prints do dashboard depois da primeira execução.
 
-| Aba Mensal | Aba Anual |
+| Aba Mensal |
 |---|---|
 | <img width="1565" height="913" alt="image" src="https://github.com/user-attachments/assets/1479ae7f-9fe6-440c-b3d0-21b5b2c6bc9b" />
+|
+| Aba Anual |
  | <img width="1570" height="638" alt="image" src="https://github.com/user-attachments/assets/58a45d5d-88b7-45fe-b955-202f55ec8350" /> |
 
 ---
