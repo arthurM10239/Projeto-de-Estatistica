@@ -1,0 +1,6 @@
+dados/**
+!dados/**/
+!**/.gitkeep
+__pycache__/
+*.pyc
+.venv/
