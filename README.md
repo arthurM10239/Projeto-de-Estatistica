@@ -239,7 +239,7 @@ dados/
 ## Autores
 
 - Ian de Azevedo Mendes
-- *(completar com o nome da dupla)*
+- Arthur Miguel Siqueira Brasil
 
 Centro Universitário do Estado do Pará (CESUPA) — Engenharia de Computação.
 
