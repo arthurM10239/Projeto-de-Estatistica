@@ -142,7 +142,10 @@ with aba_visao_geral:
             
         # Gráfico de Dispersão
         st.markdown("### Correlação: Risco de Fogo vs. Dias Sem Chuva")
-        fig_scatter = px.scatter(df_filtrado, x='DiaSemChuva', y='RiscoFogo', 
+
+        df_scatter = df_filtrado.dropna(subset=['DiaSemChuva', 'RiscoFogo', 'FRP'])
+
+        fig_scatter = px.scatter(df_scatter, x='DiaSemChuva', y='RiscoFogo', 
                                  color='FRP', size='FRP', hover_data=['Municipio', 'DataHora', 'Ano'],
                                  title='Relação entre Dias sem Chuva, Risco de Fogo e Intensidade (FRP)')
         st.plotly_chart(fig_scatter, use_container_width=True)
