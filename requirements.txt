@@ -1,0 +1,7 @@
+pandas>=2.0
+numpy
+requests
+geopandas>=1.0
+pyogrio
+streamlit>=1.50
+plotly>=5.20

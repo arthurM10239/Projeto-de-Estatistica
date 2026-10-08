@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Coleta de dados",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/coleta/executar_coleta.py",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Dashboard Streamlit",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "${workspaceFolder}/dashboard/app.py"],
+      "console": "integratedTerminal"
+    }
+  ]
+}

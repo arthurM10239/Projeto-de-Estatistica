@@ -1,6 +1,11 @@
 dados/**
 !dados/**/
 !**/.gitkeep
+
 __pycache__/
 *.pyc
 .venv/
+venv/
+env/
+.DS_Store
+.ipynb_checkpoints/

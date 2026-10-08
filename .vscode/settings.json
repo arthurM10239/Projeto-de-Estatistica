@@ -1,0 +1,5 @@
+{
+  "python.analysis.extraPaths": ["coleta", "dashboard"],
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "files.encoding": "utf8"
+}
