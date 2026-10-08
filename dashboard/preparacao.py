@@ -1,5 +1,8 @@
+# Importação de bibliotecas nativas do Python para manipulação de arquivos e dados em formato JSON
 import json
 from pathlib import Path
+
+# Importação da biblioteca Pandas para manipulação de tabelas de dados e Streamlit para o uso de cache
 import pandas as pd
 import streamlit as st
 
@@ -41,7 +44,7 @@ METRICAS_FOCOS = {
     "Focos por 1000 km²": "focos_por_1000_km2",
 }
 
-# guarda o resultado da função na memória para não ler o CSV toda vez que a tela atualizar
+# Decorador do Streamlit que guarda o resultado da função na memória (cache) para não ler o CSV toda vez que a tela atualizar
 @st.cache_data
 def carregar_base_mensal():
     # Verifica se o arquivo existe; se não, retorna vazio para não quebrar o código
@@ -55,7 +58,7 @@ def carregar_base_mensal():
     base["data"] = pd.to_datetime({"year": base["ano"], "month": base["mes"], "day": 1})
     return base
 
-# carrega os dados anuais (ciclos do PRODES)
+# Decorador de cache para carregar os dados anuais (ciclos do PRODES)
 @st.cache_data
 def carregar_base_anual():
     if not ARQUIVO_BASE_ANUAL.exists():
@@ -101,3 +104,84 @@ def filtrar_base_anual(base_anual, intervalo_anos, codigos_municipios):
 # Agrupa os dados de vários municípios para gerar uma visão estadual/regional somada por mês
 def agregar_por_mes(base_filtrada):
     base_ponderada = base_filtrada.copy()
+    
+    # Define como as colunas padrões serão agregadas (somando a quantidade e a área)
+    colunas_soma = {"quantidade_focos": "sum", "area_km2": "sum"}
+    
+    # Identifica as colunas de clima presentes na base
+    variaveis_presentes = [v for v in VARIAVEIS_PONDERADAS_POR_AREA if v in base_ponderada.columns]
+    
+    # Estratégia matemática para fazer "Média Ponderada" do clima com base no tamanho (área) da cidade
+    for variavel in variaveis_presentes:
+        # Pega a área do município apenas se ele tiver dados de clima (se não, zera)
+        area_valida = base_ponderada["area_km2"].where(base_ponderada[variavel].notna(), 0)
+        
+        # Multiplica o dado climático pela área da cidade
+        base_ponderada[f"{variavel}_x_area"] = base_ponderada[variavel].fillna(0) * area_valida
+        base_ponderada[f"{variavel}_area_valida"] = area_valida
+        
+        # Diz para o Pandas somar essas multiplicações depois no 'groupby'
+        colunas_soma[f"{variavel}_x_area"] = "sum"
+        colunas_soma[f"{variavel}_area_valida"] = "sum"
+        
+    # Agrupa a tabela inteira por Mês, Ano e índices climáticos globais
+    agregado = (
+        base_ponderada.groupby(["data", "ano", "mes", "anomalia_oni", "fase_enso"], dropna=False)
+        .agg(colunas_soma)
+        .reset_index()
+    )
+    
+    # Finaliza a média ponderada dividindo a soma dos (valores * áreas) pela soma total das áreas
+    for variavel in variaveis_presentes:
+        agregado[variavel] = agregado[f"{variavel}_x_area"] / agregado[f"{variavel}_area_valida"].replace(0, pd.NA)
+        
+    # Calcula a métrica de focos proporcional ao tamanho da área (densidade)
+    agregado["focos_por_1000_km2"] = agregado["quantidade_focos"] / agregado["area_km2"] * 1000
+    
+    # Converte o número do mês para o nome abreviado (ex: 1 virar "Jan")
+    agregado["nome_mes"] = agregado["mes"].map(NOMES_MESES)
+    
+    # Limpa a tabela, removendo colunas temporárias matemáticas e deixando só o que importa
+    colunas_finais = [
+        "data", "ano", "mes", "nome_mes", "anomalia_oni", "fase_enso",
+        "quantidade_focos", "focos_por_1000_km2", *variaveis_presentes,
+    ]
+    return agregado[colunas_finais].sort_values("data").reset_index(drop=True)
+
+# Calcula se os valores climáticos estão acima ou abaixo da média histórica do respectivo mês
+def calcular_desvio_da_media_do_mes(agregado_mensal, colunas):
+    desvios = agregado_mensal.copy()
+    for coluna in colunas:
+        # Pega o valor absoluto e subtrai pela média de todos os outros valores do mesmo mês ("mes")
+        desvios[coluna] = desvios[coluna] - desvios.groupby("mes")[coluna].transform("mean")
+    return desvios
+
+# Prepara a base agregando os focos totais de cada município no período inteiro para plotar no mapa
+def agregar_por_municipio(base_filtrada):
+    agregado = (
+        base_filtrada.groupby(["codigo_ibge", "nome_municipio"])
+        # Soma a quantidade de focos e pega apenas a primeira (first) informação da área
+        .agg(quantidade_focos=("quantidade_focos", "sum"), area_km2=("area_km2", "first"))
+        .reset_index()
+    )
+    # Calcula a densidade de focos baseando-se no novo total somado e no tamanho do município
+    agregado["focos_por_1000_km2"] = agregado["quantidade_focos"] / agregado["area_km2"] * 1000
+    
+    # O mapa coroplético exige que a chave de ligação (IBGE) seja um texto (String), não um número
+    agregado["codigo_ibge_texto"] = agregado["codigo_ibge"].astype(str)
+    return agregado
+
+# Soma os indicadores anuais agrupando pelo ciclo PRODES (que vai de Agosto de um ano a Julho do outro)
+def agregar_por_ciclo_prodes(base_anual_filtrada):
+    agregado = (
+        base_anual_filtrada.groupby("ano_prodes")
+        .agg(
+            quantidade_focos=("quantidade_focos", "sum"),
+            desmatamento_km2=("desmatamento_km2", "sum"),
+            area_km2=("area_km2", "sum"),
+        )
+        .reset_index()
+    )
+    # Recalcula a densidade por 1000km² após a soma dos valores do ciclo
+    agregado["focos_por_1000_km2"] = agregado["quantidade_focos"] / agregado["area_km2"] * 1000
+    return agregado
