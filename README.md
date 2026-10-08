@@ -96,12 +96,6 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-No VS Code: `Ctrl+Shift+P` → `Python: Select Interpreter` → selecionar o `.venv`.
-
-> O ambiente virtual não é substituído pelo Git. O repositório versiona o
-> código; o `.venv` guarda as bibliotecas instaladas. Cada máquina cria o seu,
-> e o `requirements.txt` é o que garante versões iguais entre os integrantes.
-
 ---
 
 ## Obtendo os dados
