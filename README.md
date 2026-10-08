@@ -84,7 +84,7 @@ Nenhum dado é versionado neste repositório. Veja [Obtendo os dados](#obtendo-o
 Requer Python 3.10 ou superior.
 
 ```bash
-git clone <url-do-repositorio>
+git clone https://github.com/arthurM10239/Projeto-de-Estatistica
 cd projeto_queimadas
 
 python -m venv .venv
